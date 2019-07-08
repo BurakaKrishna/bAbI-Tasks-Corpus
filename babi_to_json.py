@@ -4,17 +4,24 @@ from babi_utilities import *
 
 # Data source and output paths
 archive_dir = "babi_archive/"
-data_dir = "babi_data/"
+data_dir = "babi_data/json/"
 
 # Get a list of all the tasks
 task_list = os.listdir(archive_dir)
 # Remove knowledge base and candidates files
 task_list = [file for file in task_list if 'task' in file]
 
+# Get a list of all the dstc2 and babi kb of restaurants
+dstc2_kb = load_text_data(archive_dir + "dstc2_kb.txt")
+dstc2_kb = set([line.split(' ')[1] for line in dstc2_kb])
+
+babi_kb = load_text_data(archive_dir + "babi_kb.txt")
+babi_kb = set([line.split(' ')[1] for line in babi_kb])
+
 for file_name in task_list:
 
     # Load the file data
-    file_data = load_data(archive_dir + file_name)
+    file_data = load_text_data(archive_dir + file_name)
 
     # Split the file name into task number and dataset
     file_name = file_name.split('.')[0]
@@ -38,10 +45,6 @@ for file_name in task_list:
             # Split on tabs to separate user and system utterances
             text = line.split('\t')
 
-            # Check this line is not an api call option
-            if any(char in ['_'] for char in text[0]):
-                continue
-
             # Remove the numbers and '<SILENCE>' from beginning of user utterances
             user_utt = text[0].split(' ')
             if re.match("\d", user_utt[0]):
@@ -49,8 +52,21 @@ for file_name in task_list:
             if user_utt[0] == '<SILENCE>':
                 del user_utt[0]
 
+            # Check this line is not an api call option
+            if file_name.split('_')[0] == 'task6':
+                if any(word in dstc2_kb for word in user_utt) or (len(user_utt) > 1 and user_utt[0] == 'api_call'):
+                    user_utt = []
+            elif len(user_utt) > 1 and user_utt[0] in babi_kb:
+                user_utt = []
+
+            # If it contains a return value for an api call surround with angle brackets
+            for i in range(len(user_utt)):
+                if any(char in ['_'] for char in user_utt[i]):
+                    user_utt[i] = '<' + user_utt[i] + '>'
+
             # Join into complete sentence
             user_utt = ' '.join(user_utt)
+            user_utt.strip()
             if user_utt is not '':
 
                 utterance = dict()
@@ -68,46 +84,57 @@ for file_name in task_list:
                 num_utterances += 1
                 utterances.append(utterance)
 
-            sys_utt = text[1].split(' ')
-            # If it is an api call then make slots instead
-            if sys_utt[0] != 'api_call':
+            # Get the system utterance
+            if len(text) > 1:
+                sys_utt = text[1].split(' ')
+            else:
+                sys_utt = None
+            # If it is not an api call then make utterance
+            if sys_utt and sys_utt[0] != 'api_call':
+
+                # If it contains a return value for an api call surround with angle brackets
+                for i in range(len(sys_utt)):
+                    if any(char in ['_'] for char in sys_utt[i]) or sys_utt[i] in dstc2_kb:
+                        sys_utt[i] = '<' + sys_utt[i] + '>'
 
                 # Join into complete sentence
                 sys_utt = ' '.join(sys_utt)
+                sys_utt.strip()
+                if sys_utt is not '':
 
-                utterance = dict()
-                # Set speaker
-                utterance['speaker'] = "SYS"
-                # Set the utterance text
-                utterance['text'] = sys_utt
-                # Set labels to empty
-                utterance['ap_label'] = ""
-                utterance['da_label'] = ""
+                    utterance = dict()
+                    # Set speaker
+                    utterance['speaker'] = "SYS"
+                    # Set the utterance text
+                    utterance['text'] = sys_utt
+                    # Set labels to empty
+                    utterance['ap_label'] = ""
+                    utterance['da_label'] = ""
 
-                # Add slots data
-                slots = dict()
+                    # Add slots data
+                    slots = dict()
 
-                # Get the next system utterance
-                next_line = file_data[line_index + 1].split('\t')
-                if len(next_line) > 1:
-                    next_sys_utt = next_line[1].split(' ')
+                    # Get the next system utterance
+                    next_line = file_data[line_index + 1].split('\t')
+                    if len(next_line) > 1:
+                        next_sys_utt = next_line[1].split(' ')
 
-                    # If it contains an api call, convert to slots
-                    if next_sys_utt[0] == 'api_call':
+                        # If it contains an api call, convert to slots
+                        if next_sys_utt[0] == 'api_call':
 
-                        # If it is the dstc task, there are only 3 slots
-                        if file_name.split('_')[0] == 'task6':
-                            slots['food_type'] = next_sys_utt[1]
-                            slots['location'] = next_sys_utt[2]
-                            slots['price'] = next_sys_utt[3]
-                        # Else there are 4 slots
-                        else:
-                            slots['food_type'] = next_sys_utt[1]
-                            slots['location'] = next_sys_utt[2]
-                            slots['num_guests'] = next_sys_utt[3]
-                            slots['price'] = next_sys_utt[4]
+                            # If it is the dstc task, there are only 3 slots
+                            if file_name.split('_')[0] == 'task6':
+                                slots['food_type'] = next_sys_utt[1]
+                                slots['location'] = next_sys_utt[2]
+                                slots['price'] = next_sys_utt[3]
+                            # Else there are 4 slots
+                            else:
+                                slots['food_type'] = next_sys_utt[1]
+                                slots['location'] = next_sys_utt[2]
+                                slots['num_guests'] = next_sys_utt[3]
+                                slots['price'] = next_sys_utt[4]
 
-                utterance['slots'] = slots
+                    utterance['slots'] = slots
 
                 # Add to utterances
                 num_utterances += 1

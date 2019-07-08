@@ -1,4 +1,3 @@
-import pickle
 import traceback
 import json
 
@@ -20,18 +19,10 @@ def save_json_data(path, file_name, data):
         json.dump(data, file, sort_keys=False, indent=4, separators=(',', ': '))
 
 
-def load_data(path, verbose=True):
+def load_text_data(path, verbose=True):
     with open(path, "r") as file:
         # Read a line and strip newline char
         lines = [line.rstrip('\r\n') for line in file.readlines()]
     if verbose:
         print("Loaded data from file %s." % path)
     return lines
-
-
-def save_data_pickle(path, data, verbose=True):
-    file = open(path, "wb")
-    pickle.dump(data, file, protocol=2)
-    file.close()
-    if verbose:
-        print("Saved data to file %s." % path)
