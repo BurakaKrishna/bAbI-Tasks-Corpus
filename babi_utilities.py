@@ -167,7 +167,9 @@ def load_json_data(path, file_name):
 
 
 def save_json_data(path, file_name, data):
-    with open(path + file_name + '.json', 'w+') as file:
+    if not os.path.exists(path):
+        os.mkdir(path)
+    with open(path + "/" + file_name + '.json', 'w+') as file:
         json.dump(data, file, sort_keys=False, indent=4, separators=(',', ': '))
 
 

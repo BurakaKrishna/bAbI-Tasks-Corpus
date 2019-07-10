@@ -2,7 +2,7 @@ from babi_utilities import *
 
 # Data source and output paths
 archive_dir = "babi_archive/"
-data_dir = "babi_data/json/"
+data_dir = "babi_data/json"
 
 # Get a list of all the tasks
 task_list = os.listdir(archive_dir)
