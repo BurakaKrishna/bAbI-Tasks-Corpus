@@ -15,6 +15,7 @@ and [Dialogue tagger](https://github.com/NathanDuran/CA-Dialogue-Tagger).
 
 babi_to_text.py processes the dialogues from the original text format into plain text files,
 with one line per-utterance, using the format outlined below.
+Setting the *utterance_only* flag to true will remove the speaker label from the output text files.
 
 babi_utilities.py script contains various helper functions for loading/saving and processing the data.
 
