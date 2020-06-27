@@ -10,8 +10,7 @@ Tasks 1-5 also include a second test set (with suffix OOV) that contains dialogu
 babi_to_json.py script processes the dialogues from the original text format into .json files using the format
 outlined below.
 This format is intended to facilitate annotation of the dialogue using the 
-[Conversation Analysis Schema](https://nathanduran.github.io/CA-Schema/)
-and [Dialogue tagger](https://github.com/NathanDuran/CA-Dialogue-Tagger).
+[Conversation Analysis Modelling Schema](https://nathanduran.github.io/Conversation-Analysis-Modelling-Schema/).
 
 babi_to_text.py processes the dialogues from the original text format into plain text files,
 with one line per-utterance, using the format outlined below.
